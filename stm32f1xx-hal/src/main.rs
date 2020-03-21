@@ -4,28 +4,28 @@
 extern crate panic_itm;
 
 // Core
-use cortex_m::{iprintln, Peripherals};
 use cortex_m_rt::entry;
 
 // Device
 use hx711;
 use nb::block;
-use stm32f1xx_hal::{pac, prelude::*};
+use stm32f1xx_hal::{
+    pac,
+    prelude::*,
+    serial::{Config, Serial},
+};
+
+use core::fmt::Write;
+
 
 #[entry]
 fn main() -> ! {
-    let mut cp = Peripherals::take().unwrap();
     let p = pac::Peripherals::take().unwrap();
 
     let mut rcc = p.RCC.constrain();
     let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
-
-    // Debug out via ITM
-    // Make sure to enable ITM via SWD/JTAG using the debug probe
-    // otherwise, code blocks here.
-    // See: https://github.com/rust-embedded/cortex-m/issues/74
-    let stim = &mut cp.ITM.stim;
-    iprintln!(&mut stim[1], "Hello!");
+    let mut flash = p.FLASH.constrain();
+    let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
     // Configure the hx711 load cell driver:
     //
@@ -36,15 +36,31 @@ fn main() -> ! {
     let pd_sck = gpioa.pa7.into_push_pull_output(&mut gpioa.crl);
     let mut hx711 = hx711::Hx711::new(dout, pd_sck);
 
+    // USART 1
+    let mut afio = p.AFIO.constrain(&mut rcc.apb2);
+    let tx_pin = gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh);
+    let rx_pin = gpioa.pa10;
+
+    let serial = Serial::usart1(
+        p.USART1,
+        (tx_pin, rx_pin),
+        &mut afio.mapr,
+        Config::default().baudrate(9600.bps()),
+        clocks,
+        &mut rcc.apb2,
+    );
+    let (mut tx, _rx) = serial.split();
+
     const N: i32 = 8;
     let mut val: i32 = 0;
 
     // Obtain the tara value
+    writeln!(tx, "Obtaining tara ...").unwrap();
     for _ in 0..N {
         val += block!(hx711.retrieve()).unwrap();
     }
     let tara = val / N;
-    iprintln!(&mut stim[1], "Tara:   {:>10}", tara);
+    writeln!(tx, "Tara:   {}", tara).unwrap();
 
     loop {
         // Measurement loop
@@ -53,6 +69,6 @@ fn main() -> ! {
             val += block!(hx711.retrieve()).unwrap();
         }
         let weight = val / N - tara;
-        iprintln!(&mut stim[1], "Weight: {:>10}", weight);
+        writeln!(tx, "{}", weight).unwrap();
     }
 }
