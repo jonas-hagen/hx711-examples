@@ -25,7 +25,14 @@ fn main() -> ! {
     let mut rcc = p.RCC.constrain();
     let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
     let mut flash = p.FLASH.constrain();
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+
+    //let clocks = rcc.cfgr.freeze(&mut flash.acr); // slow clock
+    let clocks = rcc
+        .cfgr
+        .use_hse(8.mhz())
+        .sysclk(72.mhz())
+        .pclk1(36.mhz())
+        .freeze(&mut flash.acr);
 
     // Configure the hx711 load cell driver:
     //
