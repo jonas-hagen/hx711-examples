@@ -12,9 +12,9 @@ use hal::sysfs_gpio::Direction;
 
 
 fn main() {
-    println!("Using HX711 with DOUT un GPIO16 and PD_SCK on GPIO18");
-    let dout = Pin::new(23);
-    let pd_sck = Pin::new(24);
+    println!("Using HX711 with DOUT on GPIO23 and PD_SCK on GPIO24");
+    let dout = Pin::new(23);   // Header pin 16
+    let pd_sck = Pin::new(24); // Header pin 18
 
     dout.export().unwrap();
     pd_sck.export().unwrap();
