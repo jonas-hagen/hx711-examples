@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![feature(unwrap_infallible)]
 
 extern crate panic_itm;
 
@@ -7,7 +8,7 @@ extern crate panic_itm;
 use cortex_m_rt::entry;
 
 // Device
-use hx711;
+use hx711::Hx711;
 use nb::block;
 use stm32f1xx_hal::{
     pac,
@@ -41,7 +42,7 @@ fn main() -> ! {
     //
     let dout = gpioa.pa6.into_floating_input(&mut gpioa.crl);
     let pd_sck = gpioa.pa7.into_push_pull_output(&mut gpioa.crl);
-    let mut hx711 = hx711::Hx711::new(dout, pd_sck);
+    let mut hx711 = Hx711::new(dout, pd_sck).into_ok();
 
     // USART 1
     let mut afio = p.AFIO.constrain(&mut rcc.apb2);
@@ -64,7 +65,7 @@ fn main() -> ! {
     // Obtain the tara value
     writeln!(tx, "Obtaining tara ...").unwrap();
     for _ in 0..N {
-        val += block!(hx711.retrieve()).unwrap();
+        val += block!(hx711.retrieve()).into_ok();
     }
     let tara = val / N;
     writeln!(tx, "Tara:   {}", tara).unwrap();
@@ -73,7 +74,7 @@ fn main() -> ! {
         // Measurement loop
         val = 0;
         for _ in 0..N {
-            val += block!(hx711.retrieve()).unwrap();
+            val += block!(hx711.retrieve()).into_ok();
         }
         let weight = val / N - tara;
         writeln!(tx, "{}", weight).unwrap();

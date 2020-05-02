@@ -25,7 +25,7 @@ fn main() {
     pd_sck.set_direction(Direction::Low).unwrap();
 
 
-    let mut hx711 = Hx711::new(dout, pd_sck);
+    let mut hx711 = Hx711::new(dout, pd_sck).unwrap();
 
     block!(hx711.retrieve()).unwrap();
     let mut zero_value: f32 = 0.0;
