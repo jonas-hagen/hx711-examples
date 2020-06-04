@@ -6,6 +6,7 @@ extern crate panic_itm;
 
 // Core
 use cortex_m_rt::entry;
+use cortex_m::Peripherals;
 
 // Device
 use hx711::Hx711;
@@ -13,6 +14,7 @@ use nb::block;
 use stm32f1xx_hal::{
     pac,
     prelude::*,
+    delay::Delay,
     serial::{Config, Serial},
 };
 
@@ -21,6 +23,7 @@ use core::fmt::Write;
 
 #[entry]
 fn main() -> ! {
+    let cp = Peripherals::take().unwrap();
     let p = pac::Peripherals::take().unwrap();
 
     let mut rcc = p.RCC.constrain();
@@ -42,7 +45,7 @@ fn main() -> ! {
     //
     let dout = gpioa.pa6.into_floating_input(&mut gpioa.crl);
     let pd_sck = gpioa.pa7.into_push_pull_output(&mut gpioa.crl);
-    let mut hx711 = Hx711::new(dout, pd_sck).into_ok();
+    let mut hx711 = Hx711::new(Delay::new(cp.SYST, clocks), dout, pd_sck).into_ok();
 
     // USART 1
     let mut afio = p.AFIO.constrain(&mut rcc.apb2);

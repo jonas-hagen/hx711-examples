@@ -2,6 +2,8 @@
 #[macro_use(block)]
 extern crate nb;
 
+use embedded_hal::blocking::delay::DelayUs;
+
 extern crate linux_embedded_hal as hal;
 extern crate hx711;
 
@@ -9,6 +11,20 @@ use std::{thread, time};
 use hx711::Hx711;
 use hal::Pin;
 use hal::sysfs_gpio::Direction;
+
+struct NoDelay();
+
+impl NoDelay {
+    pub fn new() -> Self {
+        NoDelay()
+    }
+}
+
+impl DelayUs<u32> for NoDelay {
+    /// No delay, linux gpio sysfs is slow enough.
+    fn delay_us(&mut self, _us: u32) {
+    }
+}
 
 
 fn main() {
@@ -24,8 +40,7 @@ fn main() {
     dout.set_direction(Direction::In).unwrap();
     pd_sck.set_direction(Direction::Low).unwrap();
 
-
-    let mut hx711 = Hx711::new(dout, pd_sck).unwrap();
+    let mut hx711 = Hx711::new(NoDelay::new(), dout, pd_sck).unwrap();
 
     block!(hx711.retrieve()).unwrap();
     let mut zero_value: f32 = 0.0;

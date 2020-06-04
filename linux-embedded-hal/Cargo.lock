@@ -169,6 +169,7 @@ dependencies = [
 name = "test-hx711"
 version = "0.1.0"
 dependencies = [
+ "embedded-hal 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "hx711 0.3.0",
  "linux-embedded-hal 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "nb 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
