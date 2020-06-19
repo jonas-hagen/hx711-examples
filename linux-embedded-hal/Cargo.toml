@@ -5,7 +5,7 @@ authors = ["Jonas Hagen <jonas.hagen3@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-linux-embedded-hal = "0.2.2"
-embedded-hal = "0.2.3"
+linux-embedded-hal = "0.3.0"
+embedded-hal = "0.2.4"
 hx711 = { path = "../../hx711" }
 nb = "0.1.2"
